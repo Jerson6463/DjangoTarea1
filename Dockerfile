@@ -10,6 +10,11 @@ ENV PYTHONUNBUFFERED=1
 # Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
+# Instalar cliente PostgreSQL para dbshell
+RUN apt-get update && \
+    apt-get install -y postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copiar e instalar dependencias primero (aprovecha caché de capas)
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
@@ -21,4 +26,4 @@ COPY . .
 EXPOSE 8000
 
 # Comando por defecto al iniciar el contenedor
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

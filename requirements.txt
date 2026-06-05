@@ -4,3 +4,12 @@ psycopg2-binary==2.9.11
 python-decouple==3.8
 sqlparse==0.5.5
 tzdata==2026.1
+gunicorn==22.0.0
+whitenoise==6.6.0
+djangorestframework==3.15.x
+djangorestframework-simplejwt==5.5.1
+django-filter==24.x
+drf-spectacular==0.27.x
+django-cors-headers==4.x.x
+django-filter==25.2
+drf-spectacular==0.27.2

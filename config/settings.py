@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import os
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,13 +41,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
+    
     'clientes',
     'envios',
     'rutas',
+    # Nuevas librerias de API
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_spectacular',
+    'corsheaders',
 ]
 
+
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,13 +72,15 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'], # carpeta global de templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'envios.context_processors.estadisticas_globales',
             ],
         },
     },
@@ -82,10 +98,17 @@ DATABASES = {
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='db'),
+        'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
     }
 }
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 60 * 60 * 8
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_NAME = 'encomiendas_session'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Password validation
@@ -122,4 +145,80 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+#URl base para los archivos staticos
+STATIC_URL = '/static/'
+#Carpetas donde DJango busca los archivos en DESARROLLO
+STATICFILES_DIRS = [BASE_DIR / 'static',]
+#Carpeta donde se juntan todos al hacer collectstatic (Produccion)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+#Archivos subidos por el usuario (formularos con FileField/ImageField)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+
+REST_FRAMEWORK = {
+    # Autenticación: JWT por defecto para toda la API
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    # Permisos: requiere autenticación por defecto
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    # Paginación: 15 registros por página
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 15,
+    # Documentación automática con drf-spectacular
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Filtros: django-filter como backend por defecto
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
+
+# ── JWT: configuración de tokens ──────────────────────────────────
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # token expira en 1 hora
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # refresh expira en 7 días
+    'ROTATE_REFRESH_TOKENS': True,                   # rotar el refresh en cada uso
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),                # Authorization: Bearer <token>
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
+
+# ── CORS: permitir peticiones desde el frontend ───────────────────
+CORS_ALLOW_ALL_ORIGINS = True  # en desarrollo
+# En producción reemplazar por CORS_ALLOWED_ORIGINS = ['https://Encomiendas.com']
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Sistema de Gestión de Encomiendas',
+    'DESCRIPTION':'''
+        API REST para gestionar el ciclo de vida de encomiendas.
+        Incluye registro de envíos, cambio de estado, historial
+        y estadísticas del sistema.
+        ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,  # no mostrar el schema en Swagger
+    'COMPONENT_SPLIT_REQUEST': True,  # esquemas separados para request y response
+    'SORT_OPERATIONS': False,  # mantener el orden del router
+    'TAGS': [
+        {'name': 'Encomiendas', 'description': 'Gestión de envíos'},
+        {'name': 'Clientes', 'description': 'Listado de clientes activos'},
+        {'name': 'Rutas', 'description': 'Rutas disponibles'},
+        {'name': 'Auth', 'description': 'Autenticación JWT'},
+    ],
+}
+
+
+
+
+
+

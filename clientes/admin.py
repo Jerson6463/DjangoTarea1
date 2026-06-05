@@ -5,26 +5,23 @@ from .models import Cliente
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
     list_display = (
-        'numero_documento',
-        'nombres',
+        'nro_doc',
+        'tipo_doc',
         'apellidos',
+        'nombres',
         'telefono',
-        'email',
-        'fecha_registro'
-    )
-
+        'estado'
+        )
+    
     list_filter = (
-        'fecha_registro',
-    )
-
+        'tipo_doc',
+        'estado'
+        )
+    
     search_fields = (
-        'nombres',
+        'nro_doc',
         'apellidos',
-        'numero_documento'
-    )
-
-    ordering = (
-        'nombres',
-    )
+        'nombres'
+        )
 
 

@@ -1,19 +1,26 @@
 from django.db import models
+from config.choices import EstadoGeneral
+from envios.querysets import RutaQuerySet
 
 # Create your models here.
 class Ruta(models.Model):
-    origen = models.CharField(max_length=50)
-    destino = models.CharField(max_length=50)
-
-    distancia_km = models.DecimalField(max_digits=8,decimal_places=2)
-    tiempo_estimado_horas = models.DecimalField(max_digits=5,decimal_places=2)
-
-    activa = models.BooleanField(default=True)
-
+    objects = RutaQuerySet.as_manager()
+    codigo = models.CharField(max_length=10,unique=True)
+    origen = models.CharField(max_length=100)
+    destino = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    precio_base = models.DecimalField(max_digits=10, decimal_places=2)
+    dias_entrega = models.PositiveIntegerField(default=1)
+    estado = models.IntegerField(
+        choices=EstadoGeneral.choices,
+        default=EstadoGeneral.ACTIVO
+    )
+    
     def __str__(self):
-        return f"{self.origen} → {self.destino}"
+        return f'{self.codigo}: {self.origen} → {self.destino}'
     
     class Meta:
+        db_table = 'rutas'
         verbose_name = 'Ruta'
         verbose_name_plural = 'Rutas'
-        ordering = ['origen']
+        ordering = ['origen', 'destino']

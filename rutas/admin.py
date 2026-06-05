@@ -5,19 +5,20 @@ from .models import Ruta
 @admin.register(Ruta)
 class RutaAdmin(admin.ModelAdmin):
     list_display = (
+        'codigo',
         'origen',
         'destino',
-        'tiempo_estimado_horas'
-    )
-
+        'precio_base',
+        'dias_entrega',
+        'estado'
+        )
+    
     list_filter = (
-        'activa',
-    )
-
+        'estado',
+        )
+    
     search_fields = (
+        'codigo',
         'origen',
         'destino'
-    )
-    ordering = (
-        'origen',
-    )
+        )
